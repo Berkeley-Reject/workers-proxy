@@ -8,8 +8,8 @@ import { SecurityOptions } from './security';
 
 export interface Configuration {
   upstream: UpstreamOptions | UpstreamOptions[];
-  firewall?: FirewallOptions | FirewallOptions[];
-  error?: ErrorOptions | ErrorOptions[];
+  firewall?: FirewallOptions[];
+  error?: ErrorOptions[];
   cors?: CORSOptions;
   optimization?: OptimizationOptions;
   header?: HeaderOptions;

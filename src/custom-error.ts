@@ -1,5 +1,4 @@
 import { Middleware } from '../types/middleware';
-import { ErrorOptions } from '../types/custom-error';
 import { UpstreamOptions } from '../types/upstream';
 import { getURL, sendRequest } from './upstream';
 
@@ -41,14 +40,7 @@ export const useCustomError: Middleware = async (
     return next();
   }
 
-  const errorRules: ErrorOptions[] = [];
-  if (Array.isArray(errorOptions)) {
-    errorRules.push(...errorOptions);
-  } else {
-    errorRules.push(errorOptions);
-  }
-
-  for await (const errorRule of errorRules) {
+  for await (const errorRule of errorOptions) {
     const {
       errorCode,
       responsePath,

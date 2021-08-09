@@ -2,7 +2,11 @@ import { Middleware } from '../types/middleware';
 
 const ipToNum = (
   ip: string,
-) :number => ip.split('.').map((octect, index, array) => parseInt(octect, 10) * (256 ** (array.length - index - 1))).reduce((accumulator, current) => accumulator + current);
+): number => ip.split('.').map(
+  (octect, index, array) => parseInt(octect, 10) * (256 ** (array.length - index - 1)),
+).reduce(
+  (accumulator, current) => accumulator + current,
+);
 
 export const useSelectUpstream: Middleware = (
   context,

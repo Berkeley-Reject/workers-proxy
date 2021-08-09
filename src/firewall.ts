@@ -1,6 +1,5 @@
 import { createResponse } from './utils';
 import {
-  FirewallOptions,
   FirewallFields,
   FirewallOperators,
 } from '../types/firewall';
@@ -163,14 +162,7 @@ export const useFirewall: Middleware = (
     return next();
   }
 
-  const firewallRules: FirewallOptions[] = [];
-  if (Array.isArray(options.firewall)) {
-    firewallRules.push(...options.firewall);
-  } else {
-    firewallRules.push(options.firewall);
-  }
-
-  for (const { field, operator, value } of firewallRules) {
+  for (const { field, operator, value } of options.firewall) {
     const fieldParam = getFieldParam(
       request,
       field,

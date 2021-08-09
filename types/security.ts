@@ -28,9 +28,4 @@ export interface SecurityOptions {
     * This mitigates MIME type sniffing which can cause security vulnerabilities.
     */
    noSniff?: boolean;
-
-   /**
-    * Sets the `Domain` attribute of the `Set-Cookie` header to the domain of the worker.
-    */
-   setCookie?: boolean;
 }
