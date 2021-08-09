@@ -24,7 +24,7 @@ test('headers.ts -> setForwardedHeaders()', () => {
   expect(request.headers.get('X-Forwarded-For')).toEqual('127.0.0.1, 127.0.0.2');
 });
 
-test('headers.ts -> setRequestHeaders()', () => {
+test('headers.ts -> useRequestHeaders()', () => {
   const context: Context = {
     request: new Request(
       'https://httpbin.org/get',
@@ -56,15 +56,13 @@ test('headers.ts -> setRequestHeaders()', () => {
   expect(context.request.headers.get('X-Forwarded-For')).toEqual('Test override');
 });
 
-test('headers.ts -> setResponseHeaders()', () => {
+test('headers.ts -> useSecurityHeaders()', () => {
   const context: Context = {
     response: new Response(
       'https://httpbin.org/get',
       {
         headers: new Headers({
           'X-Powered-By': 'Express',
-          'X-PJAX-URL': 'https://test.com/pjax',
-          'Set-Cookie': 'cookie_1=test; domain=<domain-value>; secure; samesite=strict; cookie_2=test; domain=<domain-value>; secure; httpOnly;',
         }),
       },
     ),
@@ -75,17 +73,11 @@ test('headers.ts -> setResponseHeaders()', () => {
       upstream: {
         domain: 'httpbin.org',
       },
-      header: {
-        response: {
-          'X-Test': 'Test header',
-        },
-      },
       security: {
         noSniff: true,
         xssFilter: true,
         hidePoweredBy: true,
         ieNoOpen: true,
-        setCookie: true,
         forwarded: true,
       },
     },
@@ -93,12 +85,45 @@ test('headers.ts -> setResponseHeaders()', () => {
   useResponseHeaders(context, () => null);
 
   expect(context.response.headers.has('X-Powered-By')).toEqual(false);
-  expect(context.response.headers.get('X-Test')).toEqual('Test header');
   expect(context.response.headers.get('X-XSS-Protection')).toEqual('0');
   expect(context.response.headers.get('X-Content-Type-Options')).toEqual('nosniff');
   expect(context.response.headers.get('X-Download-Options')).toEqual('noopen');
-  expect(context.response.headers.get('X-PJAX-URL')).toEqual('https://httpbin.org/pjax');
+});
+
+test('headers.ts -> useRewriteHeaders()', () => {
+  const context: Context = {
+    response: new Response(
+      'https://httpbin.org',
+      {
+        headers: new Headers({
+          'x-pjax-url': 'https://upstream.httpbin.org/pjax',
+          location: 'https://upstream.httpbin.org/redirect',
+          'Set-Cookie': 'cookie_1=test; domain=<domain-value>; secure; samesite=strict; cookie_2=test; domain=<domain-value>; secure; httpOnly;',
+        }),
+      },
+    ),
+    request: new Request('https://upstream.httpbin.org'),
+    hostname: 'httpbin.org',
+    upstream: {
+      domain: 'upstream.httpbin.org',
+    },
+    options: {
+      upstream: {
+        domain: 'httpbin.org',
+      },
+      header: {
+        rewrite: {
+          pjax: true,
+          location: true,
+          cookie: true,
+        },
+      },
+    },
+  };
+  useResponseHeaders(context, () => null);
 
   const cookie = 'cookie_1=test;domain=httpbin.org;secure;samesite=strict;cookie_2=test;domain=httpbin.org;secure;httpOnly;';
-  expect(context.response.headers.get('Set-Cookie')).toEqual(cookie);
+  expect(context.response.headers.get('set-cookie')).toEqual(cookie);
+  expect(context.response.headers.get('x-pjax-url')).toEqual('https://httpbin.org/pjax');
+  expect(context.response.headers.get('location')).toEqual('https://httpbin.org/redirect');
 });
