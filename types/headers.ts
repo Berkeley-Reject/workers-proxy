@@ -1,4 +1,10 @@
 export interface HeaderOptions {
+  rewrite?: {
+    location?: boolean;
+    cookie?: boolean;
+    pjax?: boolean;
+  };
+
   /**
    * Sets request header going upstream to the backend.
    */
