@@ -5,6 +5,7 @@ import { CORSOptions } from './cors';
 import { OptimizationOptions } from './optimization';
 import { HeaderOptions } from './headers';
 import { SecurityOptions } from './security';
+import { RewriteOptions } from './rewrite';
 
 export interface Configuration {
   upstream: UpstreamOptions | UpstreamOptions[];
@@ -14,6 +15,7 @@ export interface Configuration {
   optimization?: OptimizationOptions;
   header?: HeaderOptions;
   security?: SecurityOptions;
+  rewrite?: RewriteOptions;
 }
 
 export interface Pattern {

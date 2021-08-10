@@ -1,4 +1,4 @@
-import { Configuration } from './index';
+import { Configuration } from './proxy';
 import { UpstreamOptions } from './upstream';
 
 export interface Context {

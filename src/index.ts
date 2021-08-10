@@ -10,7 +10,7 @@ import { useCORS } from './cors';
 import { createResponse, getHostname } from './utils';
 import { usePipeline } from './middleware';
 
-import { Proxy, Configuration, Pattern } from '../types/index';
+import { Proxy, Configuration, Pattern } from '../types/proxy';
 import { Context } from '../types/middleware';
 
 const filter = (

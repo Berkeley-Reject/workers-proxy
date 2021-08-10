@@ -111,12 +111,10 @@ test('headers.ts -> useRewriteHeaders()', () => {
       upstream: {
         domain: 'httpbin.org',
       },
-      header: {
-        rewrite: {
-          pjax: true,
-          location: true,
-          cookie: true,
-        },
+      rewrite: {
+        pjax: true,
+        location: true,
+        cookie: true,
       },
     },
   };

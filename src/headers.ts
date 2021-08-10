@@ -1,5 +1,5 @@
-import { HeaderOptions } from '../types/headers';
 import { Middleware } from '../types/middleware';
+import { RewriteOptions } from '../types/rewrite';
 import { SecurityOptions } from '../types/security';
 import { UpstreamOptions } from '../types/upstream';
 import { isSameOrigin } from './utils';
@@ -56,9 +56,9 @@ export const useRequestHeaders: Middleware = (
 
 export const useSecurityHeaders = (
   headers: Headers,
-  securityOptions: SecurityOptions | undefined,
+  security: SecurityOptions | undefined,
 ): Headers => {
-  if (securityOptions === undefined) {
+  if (security === undefined) {
     return headers;
   }
 
@@ -67,7 +67,7 @@ export const useSecurityHeaders = (
     noSniff,
     hidePoweredBy,
     ieNoOpen,
-  } = securityOptions;
+  } = security;
 
   if (xssFilter) {
     headers.set('X-XSS-Protection', '0');
@@ -90,19 +90,18 @@ export const useSecurityHeaders = (
 
 export const useRewriteHeaders = (
   headers: Headers,
-  headerOptions: HeaderOptions | undefined,
+  rewrite: RewriteOptions | undefined,
   hostname: string,
   upstream: UpstreamOptions | null,
 ): Headers => {
   if (
-    headerOptions === undefined
-    || headerOptions.rewrite === undefined
+    rewrite === undefined
     || upstream === null
   ) {
     return headers;
   }
 
-  const { cookie, pjax, location } = headerOptions.rewrite;
+  const { cookie, pjax, location } = rewrite;
 
   const setCookieHeader = headers.get('set-cookie');
   if (
@@ -157,14 +156,15 @@ export const useResponseHeaders: Middleware = (
     securityOptions,
   );
 
-  const headerOptions = options.header;
+  const rewriteOptions = options.rewrite;
   const rewriteHeaders = useRewriteHeaders(
     securityHeaders,
-    headerOptions,
+    rewriteOptions,
     hostname,
     upstream,
   );
 
+  const headerOptions = options.header;
   if (
     headerOptions !== undefined
     && headerOptions.response !== undefined
