@@ -16,6 +16,17 @@ export interface Configuration {
   security?: SecurityOptions;
 }
 
+export interface Pattern {
+  pattern: string;
+  options: Configuration;
+}
+
 export interface Proxy {
- apply: (request: Request) => Promise<Response>;
+  use: (
+    pattern: string,
+    options: Configuration,
+  ) => void;
+  apply: (
+    request: Request,
+  ) => Promise<Response>;
 }
