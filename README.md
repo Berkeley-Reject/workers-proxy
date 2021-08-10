@@ -1,4 +1,4 @@
-![Header](https://raw.githubusercontent.com/booster-labs/rocket-booster/master/.github/img/header.png)
+![Header](https://raw.githubusercontent.com/booster-labs/rocket-booster/master/.github/img/header.jpg)
 
 <div align="center">
 
