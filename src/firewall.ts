@@ -52,7 +52,7 @@ export const parseFirewallRule = (
     (value instanceof RegExp && operator !== 'match')
     || (!(value instanceof RegExp) && operator === 'match')
   ) {
-    throw new Error('You must use match operator for regular expression');
+    throw new Error('You must use match operator for regular expression.');
   }
 
   if (

@@ -1,3 +1,4 @@
+import { useValidate } from './validate';
 import { useFirewall } from './firewall';
 import { useRequestHeaders, useResponseHeaders } from './headers';
 import { useSelectUpstream } from './load-balancing';
@@ -6,7 +7,7 @@ import { useUpstream } from './upstream';
 import { useCustomError } from './custom-error';
 import { useCORS } from './cors';
 
-import { getHostname } from './utils';
+import { createResponse, getHostname } from './utils';
 import { usePipeline } from './middleware';
 
 import { Proxy, Configuration } from '../types/index';
@@ -16,6 +17,7 @@ export default function useProxy(
   options: Configuration,
 ): Proxy {
   const pipeline = usePipeline(
+    useValidate,
     useFirewall,
     useRequestHeaders,
     useSelectUpstream,
@@ -34,8 +36,14 @@ export default function useProxy(
       response: new Response('Unhandled response'),
       upstream: null,
     };
-
-    await pipeline.execute(context);
+    try {
+      await pipeline.execute(context);
+    } catch (error) {
+      context.response = createResponse(
+        error,
+        500,
+      );
+    }
     return context.response;
   };
 

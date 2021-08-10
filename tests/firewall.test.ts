@@ -1,7 +1,7 @@
 import {
   getFieldParam,
   parseFirewallRule,
-  useFirewall
+  useFirewall,
 } from '../src/firewall';
 
 import { Context } from '../types/middleware';
@@ -139,7 +139,7 @@ test('firewall.ts -> useFirewall()', () => {
     },
   ];
   const context: Context = {
-    request: request,
+    request,
     response: new Response(),
     hostname: 'https://httpbin.org',
     upstream: null,
@@ -147,7 +147,7 @@ test('firewall.ts -> useFirewall()', () => {
       upstream: {
         domain: 'httpbin.org',
       },
-      firewall: firewall
+      firewall,
     },
   };
   useFirewall(context, () => null);
@@ -181,7 +181,7 @@ test('firewall.ts -> useFirewall()', () => {
       upstream: {
         domain: 'httpbin.org',
       },
-      firewall: firewall
+      firewall,
     },
   };
   useFirewall(context, () => null);

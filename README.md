@@ -11,37 +11,61 @@
 [![forthebadge](https://forthebadge.com/images/badges/ctrl-c-ctrl-v.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
 
-[Releases](https://github.com/booster-labs/rocket-booster/releases) |
-[Examples](#examples) |
-[Configuration](#configuration) |
-[Contribute](#contribute)
+[📦 Releases](https://github.com/booster-labs/rocket-booster/releases) |
+[📔 Examples](#-examples) |
+[⚙️ Configuration](#-configuration) |
+[🌎 Contributing](#-contributing)
 </div>
 
-**rocket-booster** is a serverless reverse proxy and load balancer library built for [Cloudflare Workers](https://workers.cloudflare.com). It sits in front of web servers (e.g. web application, storage platform, or RESTful API), forwards HTTP requests or WebSocket traffics from clients to upstream servers and transforms responses with several optimizations to improve page loading time.
+🚀 **rocket-booster** is a serverless reverse proxy and load balancing library built for [Cloudflare Workers](https://workers.cloudflare.com). It sits in front of web servers (e.g. web application, storage platform, or RESTful API), forwards HTTP requests or WebSocket traffics from clients to upstream servers and transforms responses with several optimizations to improve page loading time.
 
-- Serverless: Deploy instantly to the auto-scaling serverless platform built by Cloudflare. No virtual machines, servers, or containers to manage.
-- Security: Enable HTTPS, HTTP/3 (with QUIC), TLS 1.3, and IPv6 for web applications.
-- Optimization: Minify HTML/CSS/JS files, compress images, cache static assets.
-- Cross-Origin: Add necessary CORS headers to the proxied response.
-- Firewall: Block traffics from specific IP addresses, countries, or scrapers.
-- Load Balancing: Distribute incoming traffics evenly among different servers.
+- ⚡ Serverless: Deploy instantly to the auto-scaling serverless platform built by Cloudflare. No virtual machines, servers, or containers to manage.
+- ✈️ Load Balancing: Distribute incoming traffics evenly among different upstream servers.
+- ⚙️ Hackable: Deliver unique content based on visitor attributes, conduct A/B testing, or build custom middleware to hook into the lifecycle. (Experimental)
+- 📄 TypeScript: Extensive type declaration with TSDoc.
 
-## Build and Deploy
+## 📦 Build and Deploy
+
+### Start with templates
+
+- [Install Wrangler CLI](https://github.com/cloudflare/wrangler#installation) and generate a project from the [rocket-booster-template](https://github.com/booster-labs/rocket-booster-template)
+
+```sh
+npm install -g @cloudflare/wrangler
+
+# JavaScript Template
+wrangler generate booster-app https://github.com/booster-labs/rocket-booster-template
+```
+
+- Install dependencies and edit the configuration in `src/index.js`
+
+```sh
+cd booster-app
+
+npm install
+```
+
+- Login and publish to Cloudflare Workers
+
+```sh
+wrangler login
+
+wrangler publish
+```
 
 ### Integrate with existing project
 
 - Install the `rocket-booster` package
 
-```sh
+```console
 npm install --save rocket-booster
 ```
 
-- Import the `useProxy` function from `rocket-booster` and invoke it with a configuration object. The function returns an object with an `apply()` method, which takes an inbound [Request](https://developers.cloudflare.com/workers/runtime-apis/request) to the Worker, and returns the [Response](https://developers.cloudflare.com/workers/runtime-apis/request) fetched from the upstream server.
+- Import the `useProxy` function from `rocket-booster` and invoke it with a configuration object. The function returns an object with an `apply()` method, which takes the inbound [Request](https://developers.cloudflare.com/workers/runtime-apis/request) to the Worker, and returns the [Response](https://developers.cloudflare.com/workers/runtime-apis/request) fetched from the upstream server.
 
 ```ts
 import useProxy from 'rocket-booster';
 
-// Create a reverse proxy for 'https://example.com'
 const config = {
   upstream: {
     domain:  'example.com',
@@ -59,14 +83,12 @@ addEventListener('fetch', (event) => {
 - Edit the configuration object to change the request and response. For example, the configuration below will add the header `Access-Control-Allow-Origin: *` to each response from the upstream server, which allows any origin to access the server.
 
 ```ts
-// Create a reverse proxy for 'https://example.com'
 const config = {
   upstream: {
     domain:  'example.com',
     protocol: 'https',
   },
   cors: {
-    // Set the 'Access-Control-Allow-Origin' CORS header to '*'.
     origin: '*',
   },
 };
@@ -79,49 +101,13 @@ wrangler build
 wrangler publish
 ```
 
-### Start from scratch
-
-- [Install Wrangler CLI](https://github.com/cloudflare/wrangler#installation)
-
-```sh
-npm install -g @cloudflare/wrangler
-```
-
-- Generate from [rocket-booster-template](https://github.com/booster-labs/rocket-booster-template)
-
-```sh
-wrangler generate booster https://github.com/booster-labs/rocket-booster-template
-```
-
-- Install dependencies
-
-```sh
-cd booster
-npm install
-```
-
-- Authenticate Wrangler with a Cloudflare API Token
-
-```sh
-wrangler login
-wrangler config
-```
-
-- Edit the configuration object in `src/index.js`
-
-- Build and publish to Cloudflare Workers
-
-```sh
-wrangler build
-wrangler publish
-```
-
-## Examples
+## 📔 Examples
 
 ### MDN Web Docs Mirror
 
+Set up a reverse proxy for [https://developer.mozilla.org](https://developer.mozilla.org):
+
 ```ts
-// Create a reverse proxy for 'https://developer.mozilla.org'
 const config = {
   upstream: {
     domain: 'developer.mozilla.org',
@@ -134,10 +120,9 @@ const config = {
 
 ### WebSocket Proxy
 
-`rocket-booster` could proxy WebSocket traffic to upstream servers. No additional configuration is required.
+`rocket-booster` could proxy WebSocket traffic to upstream servers. No additional configuration is required. Set up a reverse proxy for [wss://echo.websocket.org](wss://echo.websocket.org):
 
 ```ts
-// Create a reverse proxy for 'wss://echo.websocket.org'
 const config = {
   upstream: {
     domain: 'echo.websocket.org',
@@ -146,7 +131,37 @@ const config = {
 };
 ```
 
-## Configuration
+### S3 Bucket with custom response behavior
+
+`rocket-booster` could set custom headers to request and response, add CORS header, or deliver custom error responses. Set up a reverse proxy for [https://example.s3.amazonaws.com](https://example.s3.amazonaws.com):
+
+```ts
+const config = {
+  upstream: {
+    domain: 'example.s3.amazonaws.com',
+    protocol: 'https',
+  },
+
+  header: {
+    response: {
+      'x-response-header': 'Hello from rocket-booster',
+    },
+  },
+
+  cors: {
+    origin: ['https://www.example.com'],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+
+  error: [{
+    errorCode: 404,
+    responsePath: '/404.html',
+  }],
+};
+```
+
+## ⚙️ Configuration
 
 ### Upstream
 
@@ -334,7 +349,7 @@ const config = {
 };
 ```
 
-## Contributing
+## 🌎 Contributing
 
 - **Request a feature**: Create an issue with the **Feature request** template.
 - **Report bugs**: Create an issue with the **Bug report** template.
