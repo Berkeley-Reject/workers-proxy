@@ -3,7 +3,7 @@
   "version": "1.2.2",
   "description": "Serverless reverse proxy and load balancing library built for Cloudflare Workers.",
   "main": "dist/index.js",
-  "types": "dist/index.d.js",
+  "types": "dist/types/proxy.d.js",
   "scripts": {
     "test": "jest",
     "lint": "eslint --fix --ext .ts",

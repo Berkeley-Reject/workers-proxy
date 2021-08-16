@@ -28,7 +28,10 @@ export const rewritePath = (
   path: string,
   rewrite: RewriteOptions,
 ): string => {
-  for (const [pattern, value] of Object.entries(rewrite)) {
+  if (rewrite.path === undefined) {
+    return path;
+  }
+  for (const [pattern, value] of Object.entries(rewrite.path)) {
     const regex = new RegExp(pattern);
     if (regex.test(path)) {
       return path.replace(regex, value);
@@ -40,7 +43,7 @@ export const rewritePath = (
 export const getURL = (
   url: string,
   upstream: UpstreamOptions,
-  rewrite: RewriteOptions | undefined,
+  rewrite?: RewriteOptions,
 ): string => {
   const cloneURL = new URL(url);
   const {

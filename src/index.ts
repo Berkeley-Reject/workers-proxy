@@ -18,7 +18,7 @@ const filter = (
   patterns: Pattern[],
 ): Configuration | null => {
   for (const { pattern, options } of patterns) {
-    const test = new RegExp(`^${pattern.replace(/\*/g, '.*')}$`).test(path);
+    const test = new RegExp(`^${pattern.replace(/\*/g, '.*')}`).test(path);
     if (test === true) {
       return options;
     }
