@@ -66,15 +66,16 @@ npm install --save rocket-booster
 ```ts
 import useProxy from 'rocket-booster';
 
-const config = {
-  upstream: {
-    domain:  'example.com',
-    protocol: 'https',
-  },
-};
-
 addEventListener('fetch', (event) => {
-  const proxy = useProxy(config);
+  const config = {
+    upstream: {
+      domain:  'example.com',
+      protocol: 'https',
+    },
+  };
+  const proxy = useProxy();
+  proxy.use('/', config);
+
   const response = proxy.apply(event.request);
   event.respondWith(response);
 });
@@ -258,7 +259,6 @@ Several optimizations are enabled by default.
 - `ieNoOpen`: Sets the `X-Download-Options` header, which is specific to Internet Explorer 8. It forces potentially-unsafe downloads to be saved, mitigating execution of HTML in the website's context. (optional, defaults to `false`)
 - `xssFilter`: Sets the `X-XSS-Protection` header to `0` to disable browsers' buggy cross-site scripting filter. (optional, defaults to `false`)
 - `noSniff`: Sets the `X-Content-Type-Options` header to `nosniff`. This mitigates MIME type sniffing which can cause security vulnerabilities. (optional, defaults to `false`)
-- `setCookie`: Sets the `Domain` attribute of the `Set-Cookie` header to the domain of the worker.
 
 ```ts
 const config = {
@@ -269,7 +269,6 @@ const config = {
     ieNoOpen: true,
     xssFilter: true,
     noSniff: true,
-    setCookie: true,
   },
 };
 ```
