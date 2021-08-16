@@ -61,7 +61,7 @@ wrangler publish
 npm install --save rocket-booster
 ```
 
-- Import the `useProxy` function from `rocket-booster` and invoke it with a configuration object. The function returns an object with an `apply()` method, which takes the inbound [Request](https://developers.cloudflare.com/workers/runtime-apis/request) to the Worker, and returns the [Response](https://developers.cloudflare.com/workers/runtime-apis/request) fetched from the upstream server.
+- Import the `useProxy` function from `rocket-booster`. The function returns an object with the `use()` method, which maps route patterns to configuration objects, and `apply()` method, which takes the inbound [Request](https://developers.cloudflare.com/workers/runtime-apis/request) to the Worker, and returns the [Response](https://developers.cloudflare.com/workers/runtime-apis/request) fetched from the upstream server.
 
 ```ts
 import useProxy from 'rocket-booster';
@@ -164,6 +164,21 @@ const config = {
 
 ## ⚙️ Configuration
 
+### Routing
+
+The `proxy` object provides a `use` function, which maps URL patterns to different configurations.
+
+```ts
+// Matches any path
+proxy.use('/', { /* ... */ });
+
+// Matches paths starting with `/api`
+proxy.use('/api', { /* ... */ });
+
+// Matches paths ending with `.json` in `/data`
+proxy.use('/data/*.json', { /* ... */ });
+```
+
 ### Upstream
 
 - `domain`: The domain name of the upstream server.
@@ -204,6 +219,27 @@ const config = {
     },
   ],
   /* ... */
+};
+```
+
+### Rewrite
+
+- `location`: Rewrite the `location` header for responses with 3xx or 201 status if exists. (optional, defaults to `false`)
+- `cookie`: Rewrite the domain in `set-cookie` header for response if exists. (optional, defaults to `false`)
+- `pjax`: Rewrite the `x-pjax-url` header for response if exists. (optional, defaults to `false`)
+- `path`: Rewrite the path of the request sent to upstream. (optional, defaults to `{}`)
+
+```ts
+const config = {
+  /* ... */
+  rewrite: {
+    location: true,
+    cookie: true,
+    pjax: true,
+    path: {
+      '/api/user': '/user'
+    },
+  },
 };
 ```
 
