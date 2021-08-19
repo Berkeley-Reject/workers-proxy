@@ -10,11 +10,24 @@ import { useCORS } from './cors';
 import { createResponse, getHostname } from './utils';
 import { usePipeline } from './middleware';
 
-import { Proxy, Configuration } from '../types/index';
+import { Proxy, Configuration, Pattern } from '../types/proxy';
 import { Context } from '../types/middleware';
 
+const filter = (
+  path: string,
+  patterns: Pattern[],
+): Configuration | null => {
+  for (const { pattern, options } of patterns) {
+    const test = new RegExp(`^${pattern.replace(/\*/g, '.*')}`).test(path);
+    if (test === true) {
+      return options;
+    }
+  }
+  return null;
+};
+
 export default function useProxy(
-  options: Configuration,
+  globalOptions?: Configuration,
 ): Proxy {
   const pipeline = usePipeline(
     useValidate,
@@ -28,7 +41,33 @@ export default function useProxy(
     useResponseHeaders,
   );
 
-  const apply = async (request: Request): Promise<Response> => {
+  const routes: Pattern[] = [];
+  if (globalOptions !== undefined) {
+    routes.push({
+      pattern: '*',
+      options: globalOptions,
+    });
+  }
+
+  const use = (
+    pattern: string,
+    options: Configuration,
+  ) => {
+    routes.push({
+      pattern,
+      options,
+    });
+  };
+
+  const apply = async (
+    request: Request,
+  ): Promise<Response> => {
+    const url = new URL(request.url);
+    const options = filter(url.pathname, routes);
+    if (options === null) {
+      return createResponse('Failed to find a route that matches the path of the current request', 500);
+    }
+
     const context: Context = {
       options,
       request,
@@ -36,18 +75,17 @@ export default function useProxy(
       response: new Response('Unhandled response'),
       upstream: null,
     };
+
     try {
       await pipeline.execute(context);
     } catch (error) {
-      context.response = createResponse(
-        error,
-        500,
-      );
+      context.response = createResponse(error, 500);
     }
     return context.response;
   };
 
   return {
+    use,
     apply,
   };
 }

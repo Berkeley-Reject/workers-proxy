@@ -1,8 +1,21 @@
 import {
+  isSameOrigin,
   isMobile,
   createResponse,
   getHostname,
 } from '../src/utils';
+import { UpstreamOptions } from '../types/upstream';
+
+test('utils.ts -> isSameOrigin()', () => {
+  const upstream: UpstreamOptions = {
+    domain: 'httpbin.org',
+    protocol: 'https',
+  };
+  const truthyUrl = new URL('https://httpbin.org/test');
+  const falsyUrl = new URL('https://github.com/test');
+  expect(isSameOrigin(truthyUrl, upstream)).toEqual(true);
+  expect(isSameOrigin(falsyUrl, upstream)).toEqual(false);
+});
 
 test('utils.ts -> createResponse()', async () => {
   const response = createResponse(

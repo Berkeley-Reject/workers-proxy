@@ -1,3 +1,5 @@
+import { UpstreamOptions } from '../types/upstream';
+
 export const isMobile = (userAgent: string): boolean => {
   const toMatch = [
     /Android/i,
@@ -24,4 +26,32 @@ export const getHostname = (
 ): string => {
   const url = new URL(request.url);
   return url.host;
+};
+
+export const isSameOrigin = (
+  url: URL,
+  upstream: UpstreamOptions,
+): boolean => {
+  if (url.hostname !== upstream.domain) {
+    return false;
+  }
+
+  if (url.port !== '') {
+    return false;
+  }
+
+  if (
+    upstream.protocol === undefined
+    && url.protocol !== 'https:'
+  ) {
+    return false;
+  }
+
+  if (
+    upstream.protocol !== undefined
+    && `${upstream.protocol}:` !== url.protocol
+  ) {
+    return false;
+  }
+  return true;
 };

@@ -1,7 +1,8 @@
 import { createResponse } from './utils';
+import { Middleware } from '../types/middleware';
 import { UpstreamOptions } from '../types/upstream';
 import { OptimizationOptions } from '../types/optimization';
-import { Middleware } from '../types/middleware';
+import { RewriteOptions } from '../types/rewrite';
 
 export const cloneRequest = (
   url: string,
@@ -23,15 +24,31 @@ export const cloneRequest = (
   return new Request(url, requestInit);
 };
 
+export const rewritePath = (
+  path: string,
+  rewrite: RewriteOptions,
+): string => {
+  if (rewrite.path === undefined) {
+    return path;
+  }
+  for (const [pattern, value] of Object.entries(rewrite.path)) {
+    const regex = new RegExp(pattern);
+    if (regex.test(path)) {
+      return path.replace(regex, value);
+    }
+  }
+  return path;
+};
+
 export const getURL = (
   url: string,
   upstream: UpstreamOptions,
+  rewrite?: RewriteOptions,
 ): string => {
   const cloneURL = new URL(url);
   const {
     domain,
     port,
-    path,
     protocol,
   } = upstream;
 
@@ -40,11 +57,15 @@ export const getURL = (
   if (port !== undefined) {
     cloneURL.port = port.toString();
   }
-  if (path !== undefined) {
-    cloneURL.pathname = `${path}${cloneURL.pathname}`;
-  }
   if (protocol !== undefined) {
     cloneURL.protocol = `${protocol}:`;
+  }
+
+  if (rewrite !== undefined) {
+    cloneURL.pathname = rewritePath(
+      cloneURL.pathname,
+      rewrite,
+    );
   }
 
   return cloneURL.href;
@@ -71,18 +92,19 @@ export const useUpstream: Middleware = async (
   if (upstream === null) {
     return null;
   }
-
   const timeout = upstream.timeout || 10000;
+
+  const { optimization, rewrite } = options;
   const url = getURL(
     request.url,
     upstream,
+    rewrite,
   );
 
-  const optimizationOptions = options.optimization;
   const upstreamRequest = cloneRequest(
     url,
     request,
-    optimizationOptions,
+    optimization,
   );
 
   try {

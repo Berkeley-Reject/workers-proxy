@@ -1,4 +1,8 @@
 import { Middleware } from '../types/middleware';
+import { RewriteOptions } from '../types/rewrite';
+import { SecurityOptions } from '../types/security';
+import { UpstreamOptions } from '../types/upstream';
+import { isSameOrigin } from './utils';
 
 export const setForwardedHeaders = (
   headers: Headers,
@@ -50,27 +54,20 @@ export const useRequestHeaders: Middleware = (
   return next();
 };
 
-export const useResponseHeaders: Middleware = (
-  context,
-  next,
-) => {
-  const { response, hostname, options } = context;
-  const securityOptions = options.security;
-  if (securityOptions === undefined) {
-    return next();
+export const useSecurityHeaders = (
+  headers: Headers,
+  security: SecurityOptions | undefined,
+): Headers => {
+  if (security === undefined) {
+    return headers;
   }
-
-  const headers = new Headers(
-    response.headers,
-  );
 
   const {
     xssFilter,
     noSniff,
     hidePoweredBy,
     ieNoOpen,
-    setCookie,
-  } = securityOptions;
+  } = security;
 
   if (xssFilter) {
     headers.set('X-XSS-Protection', '0');
@@ -88,10 +85,28 @@ export const useResponseHeaders: Middleware = (
     headers.set('X-Download-Options', 'noopen');
   }
 
+  return headers;
+};
+
+export const useRewriteHeaders = (
+  headers: Headers,
+  rewrite: RewriteOptions | undefined,
+  hostname: string,
+  upstream: UpstreamOptions | null,
+): Headers => {
+  if (
+    rewrite === undefined
+    || upstream === null
+  ) {
+    return headers;
+  }
+
+  const { cookie, pjax, location } = rewrite;
+
   const setCookieHeader = headers.get('set-cookie');
   if (
-    setCookieHeader !== null
-    && setCookie
+    cookie
+    && setCookieHeader !== null
   ) {
     const setCookieAttributes = setCookieHeader.split(';').map((attribute) => {
       if (attribute.toLowerCase().trim().startsWith('domain=')) {
@@ -99,15 +114,55 @@ export const useResponseHeaders: Middleware = (
       }
       return attribute.trim();
     });
-    headers.set('Set-Cookie', setCookieAttributes.join(';'));
+    headers.set('set-cookie', setCookieAttributes.join(';'));
   }
 
   const pjaxHeader = headers.get('x-pjax-url');
-  if (pjaxHeader !== null) {
+  if (pjax && pjaxHeader !== null) {
     const pjaxUrl = new URL(pjaxHeader);
-    pjaxUrl.hostname = hostname;
-    headers.set('x-pjax-url', pjaxUrl.href);
+    if (isSameOrigin(pjaxUrl, upstream)) {
+      pjaxUrl.hostname = hostname;
+      headers.set('x-pjax-url', pjaxUrl.href);
+    }
   }
+
+  const locationHeader = headers.get('location');
+  if (location && locationHeader !== null) {
+    const locationUrl = new URL(locationHeader);
+    if (isSameOrigin(locationUrl, upstream)) {
+      locationUrl.hostname = hostname;
+      headers.set('location', locationUrl.href);
+    }
+  }
+
+  return headers;
+};
+
+export const useResponseHeaders: Middleware = (
+  context,
+  next,
+) => {
+  const {
+    response,
+    options,
+    hostname,
+    upstream,
+  } = context;
+  const headers = new Headers(response.headers);
+
+  const securityOptions = options.security;
+  const securityHeaders = useSecurityHeaders(
+    headers,
+    securityOptions,
+  );
+
+  const rewriteOptions = options.rewrite;
+  const rewriteHeaders = useRewriteHeaders(
+    securityHeaders,
+    rewriteOptions,
+    hostname,
+    upstream,
+  );
 
   const headerOptions = options.header;
   if (
@@ -124,7 +179,7 @@ export const useResponseHeaders: Middleware = (
     {
       status: response.status,
       statusText: response.statusText,
-      headers,
+      headers: rewriteHeaders,
     },
   );
   return next();

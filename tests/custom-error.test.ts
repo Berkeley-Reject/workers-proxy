@@ -34,11 +34,11 @@ test('custom-error.ts -> useCustomError()', async () => {
         domain: 'httpbin.org',
         protocol: 'https',
       },
-      error: {
+      error: [{
         errorCode: [400, 401],
         responsePath: '/path',
         responseCode: 403,
-      },
+      }],
     },
   };
 

@@ -1,4 +1,4 @@
-![Header](https://raw.githubusercontent.com/booster-labs/rocket-booster/master/.github/img/header.png)
+![Header](https://raw.githubusercontent.com/booster-labs/rocket-booster/master/.github/img/header.jpg)
 
 <div align="center">
 
@@ -61,20 +61,21 @@ wrangler publish
 npm install --save rocket-booster
 ```
 
-- Import the `useProxy` function from `rocket-booster` and invoke it with a configuration object. The function returns an object with an `apply()` method, which takes the inbound [Request](https://developers.cloudflare.com/workers/runtime-apis/request) to the Worker, and returns the [Response](https://developers.cloudflare.com/workers/runtime-apis/request) fetched from the upstream server.
+- Import the `useProxy` function from `rocket-booster`. The function returns an object with the `use()` method, which maps route patterns to configuration objects, and `apply()` method, which takes the inbound [Request](https://developers.cloudflare.com/workers/runtime-apis/request) to the Worker, and returns the [Response](https://developers.cloudflare.com/workers/runtime-apis/request) fetched from the upstream server.
 
 ```ts
 import useProxy from 'rocket-booster';
 
-const config = {
-  upstream: {
-    domain:  'example.com',
-    protocol: 'https',
-  },
-};
-
 addEventListener('fetch', (event) => {
-  const proxy = useProxy(config);
+  const config = {
+    upstream: {
+      domain:  'example.com',
+      protocol: 'https',
+    },
+  };
+  const proxy = useProxy();
+  proxy.use('/', config);
+
   const response = proxy.apply(event.request);
   event.respondWith(response);
 });
@@ -163,6 +164,21 @@ const config = {
 
 ## ⚙️ Configuration
 
+### Routing
+
+The `proxy` object provides a `use` function, which maps URL patterns to different configurations.
+
+```ts
+// Matches any path
+proxy.use('/', { /* ... */ });
+
+// Matches paths starting with `/api`
+proxy.use('/api', { /* ... */ });
+
+// Matches paths ending with `.json` in `/data`
+proxy.use('/data/*.json', { /* ... */ });
+```
+
 ### Upstream
 
 - `domain`: The domain name of the upstream server.
@@ -203,6 +219,27 @@ const config = {
     },
   ],
   /* ... */
+};
+```
+
+### Rewrite
+
+- `location`: Rewrite the `location` header for responses with 3xx or 201 status if exists. (optional, defaults to `false`)
+- `cookie`: Rewrite the domain in `set-cookie` header for response if exists. (optional, defaults to `false`)
+- `pjax`: Rewrite the `x-pjax-url` header for response if exists. (optional, defaults to `false`)
+- `path`: Rewrite the path of the request sent to upstream. (optional, defaults to `{}`)
+
+```ts
+const config = {
+  /* ... */
+  rewrite: {
+    location: true,
+    cookie: true,
+    pjax: true,
+    path: {
+      '/api/user': '/user'
+    },
+  },
 };
 ```
 
@@ -258,7 +295,6 @@ Several optimizations are enabled by default.
 - `ieNoOpen`: Sets the `X-Download-Options` header, which is specific to Internet Explorer 8. It forces potentially-unsafe downloads to be saved, mitigating execution of HTML in the website's context. (optional, defaults to `false`)
 - `xssFilter`: Sets the `X-XSS-Protection` header to `0` to disable browsers' buggy cross-site scripting filter. (optional, defaults to `false`)
 - `noSniff`: Sets the `X-Content-Type-Options` header to `nosniff`. This mitigates MIME type sniffing which can cause security vulnerabilities. (optional, defaults to `false`)
-- `setCookie`: Sets the `Domain` attribute of the `Set-Cookie` header to the domain of the worker.
 
 ```ts
 const config = {
@@ -269,7 +305,6 @@ const config = {
     ieNoOpen: true,
     xssFilter: true,
     noSniff: true,
-    setCookie: true,
   },
 };
 ```
