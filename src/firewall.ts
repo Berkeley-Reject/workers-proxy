@@ -2,45 +2,51 @@ import { createResponse } from './utils';
 import {
   FirewallFields,
   FirewallOperators,
+  FirewallHandler,
   FirewallOptions,
 } from '../types/firewall';
 import { Middleware } from '../types/middleware';
 
-const validateFirewall = (
-  firewall: FirewallOptions,
-): void => {
+const fields: Set<FirewallFields> = new Set([
+  'country',
+  'continent',
+  'asn',
+  'ip',
+  'hostname',
+  'user-agent',
+]);
+
+const operators: Set<FirewallOperators> = new Set([
+  'equal',
+  'not equal',
+  'greater',
+  'less',
+  'in',
+  'not in',
+  'contain',
+  'not contain',
+  'match',
+  'not match',
+]);
+
+const validateFirewall = ({
+  field,
+  operator,
+  value,
+}: FirewallOptions): void => {
   if (
-    firewall.field === undefined
-    || firewall.operator === undefined
-    || firewall.value === undefined
+    field === undefined
+    || operator === undefined
+    || value === undefined
   ) {
     throw new Error('Invalid \'firewall\' field in the option object');
   }
 
-  const fields = new Set([
-    'country',
-    'continent',
-    'asn',
-    'ip',
-    'hostname',
-    'user-agent',
-  ]);
-  if (fields.has(firewall.field) === false) {
+  if (fields.has(field) === false) {
     throw new Error('Invalid \'firewall\' field in the option object');
   }
 
-  const operators = new Set([
-    'equal',
-    'not equal',
-    'greater',
-    'less',
-    'in',
-    'not in',
-    'contain',
-    'not contain',
-    'match',
-  ]);
-  if (operators.has(firewall.operator) === false) {
+  if (operators.has(operator) === false) {
     throw new Error('Invalid \'firewall\' field in the option object');
   }
 };
@@ -48,149 +54,119 @@ const validateFirewall = (
 export const getFieldParam = (
   request: Request,
   field: FirewallFields,
-): string | number | null => {
+): string | number | void => {
   const cfProperties = request.cf;
-
-  if (field === 'asn') {
-    return cfProperties.asn;
+  switch (field) {
+    case 'asn':
+      return cfProperties.asn;
+    case 'continent':
+      return cfProperties.continent || '';
+    case 'country':
+      return cfProperties.country;
+    case 'hostname':
+      return request.headers.get('host') || '';
+    case 'ip':
+      return request.headers.get('cf-connecting-ip') || '';
+    case 'user-agent':
+      return request.headers.get('user-agent') || '';
+    default:
+      return undefined;
   }
-
-  if (field === 'continent') {
-    return cfProperties.continent || '';
-  }
-
-  if (field === 'country') {
-    return cfProperties.country;
-  }
-
-  if (field === 'hostname') {
-    return request.headers.get('host') || '';
-  }
-
-  if (field === 'ip') {
-    return request.headers.get('cf-connecting-ip') || '';
-  }
-
-  if (field === 'user-agent') {
-    return request.headers.get('user-agent') || '';
-  }
-
-  return null;
 };
 
-export const parseFirewallRule = (
-  fieldParam: string | number | null,
-  operator: FirewallOperators,
-  value: string | string[] | number | number[] | RegExp,
-): Response | null => {
-  if (fieldParam === null) {
-    return null;
-  }
+export const matchOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => value instanceof RegExp && value.test(fieldParam.toString());
 
+export const notMatchOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => value instanceof RegExp && !value.test(fieldParam.toString());
+
+export const equalOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => fieldParam === value;
+
+export const notEqualOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => fieldParam !== value;
+
+export const greaterOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => {
   if (
-    (value instanceof RegExp && operator !== 'match')
-    || (!(value instanceof RegExp) && operator === 'match')
+    typeof fieldParam !== 'number'
+    || typeof value !== 'number'
   ) {
-    throw new Error('You must use match operator for regular expression.');
+    return false;
   }
+  return fieldParam > value;
+};
 
+export const lessOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => {
   if (
-    value instanceof RegExp
-    && operator === 'match'
-    && value.test(fieldParam.toString())
+    typeof fieldParam !== 'number'
+    || typeof value !== 'number'
   ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
+    return false;
   }
+  return fieldParam < value;
+};
 
+export const containOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => {
   if (
-    operator === 'equal'
-  && fieldParam === value
+    typeof fieldParam !== 'string'
+    || typeof value !== 'string'
   ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
+    return false;
+  }
+  return fieldParam.includes(value);
+};
+
+export const notContainOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => !containOperator(fieldParam, value);
+
+export const inOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => {
+  if (!Array.isArray(value)) {
+    return false;
   }
 
-  if (
-    operator === 'not equal'
-  && typeof fieldParam === typeof value
-  && fieldParam !== value
-  ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
-  }
+  return value.some(
+    (item: string | number) => item === fieldParam,
+  );
+};
 
-  if (
-    operator === 'greater'
-  && typeof fieldParam === 'number'
-  && typeof value === 'number'
-  && fieldParam > value
-  ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
-  }
+export const notInOperator: FirewallHandler = (
+  fieldParam,
+  value,
+) => !inOperator(fieldParam, value);
 
-  if (
-    operator === 'less'
-  && typeof fieldParam === 'number'
-  && typeof value === 'number'
-  && fieldParam < value
-  ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
-  }
-
-  if (Array.isArray(value)) {
-    const contains = value.some(
-      (item: string | number) => item === fieldParam,
-    );
-
-    if (
-      (contains && operator === 'in')
-      || (!contains && operator === 'not in')
-    ) {
-      return createResponse(
-        'You don\'t have permission to access this service.',
-        403,
-      );
-    }
-  }
-
-  if (
-    operator === 'contain'
-  && typeof fieldParam === 'string'
-  && typeof value === 'string'
-  && fieldParam.includes(value)
-  ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
-  }
-
-  if (
-    operator === 'not contain'
-  && typeof fieldParam === 'string'
-  && typeof value === 'string'
-  && !fieldParam.includes(value)
-  ) {
-    return createResponse(
-      'You don\'t have permission to access this service.',
-      403,
-    );
-  }
-
-  return null;
+const operatorsMap: Record<FirewallOperators, FirewallHandler> = {
+  match: matchOperator,
+  contain: containOperator,
+  equal: equalOperator,
+  in: inOperator,
+  greater: greaterOperator,
+  less: lessOperator,
+  'not match': notMatchOperator,
+  'not contain': notContainOperator,
+  'not equal': notEqualOperator,
+  'not in': notInOperator,
 };
 
 export const useFirewall: Middleware = async (
@@ -210,14 +186,14 @@ export const useFirewall: Middleware = async (
       field,
     );
 
-    const response = parseFirewallRule(
-      fieldParam,
-      operator,
-      value,
-    );
-
-    if (response !== null) {
-      context.response = response;
+    if (
+      fieldParam !== undefined
+      && operatorsMap[operator](fieldParam, value)
+    ) {
+      context.response = createResponse(
+        'You don\'t have permission to access this service.',
+        403,
+      );
       return;
     }
   }
