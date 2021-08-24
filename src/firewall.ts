@@ -1,12 +1,12 @@
 import {
-  FirewallFields,
-  FirewallOperators,
+  FirewallField,
+  FirewallOperator,
   FirewallHandler,
   FirewallOptions,
 } from '../types/firewall';
 import { Middleware } from '../types/middleware';
 
-const fields: Set<FirewallFields> = new Set([
+const fields: Set<FirewallField> = new Set([
   'country',
   'continent',
   'asn',
@@ -15,7 +15,7 @@ const fields: Set<FirewallFields> = new Set([
   'user-agent',
 ]);
 
-const operators: Set<FirewallOperators> = new Set([
+const operators: Set<FirewallOperator> = new Set([
   'equal',
   'not equal',
   'greater',
@@ -52,7 +52,7 @@ const validateFirewall = ({
 
 export const getFieldParam = (
   request: Request,
-  field: FirewallFields,
+  field: FirewallField,
 ): string | number | void => {
   const cfProperties = request.cf;
   switch (field) {
@@ -155,7 +155,7 @@ export const notInOperator: FirewallHandler = (
   value,
 ) => !inOperator(fieldParam, value);
 
-const operatorsMap: Record<FirewallOperators, FirewallHandler> = {
+const operatorsMap: Record<FirewallOperator, FirewallHandler> = {
   match: matchOperator,
   contain: containOperator,
   equal: equalOperator,
