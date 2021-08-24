@@ -118,6 +118,11 @@ test('firewall.ts -> notContainOperator()', () => {
 test('firewall.ts -> matchOperator()', () => {
   expect(matchOperator('test-string', /test-.*/)).toBeTruthy();
   expect(matchOperator('test-string', /not-.*/)).toBeFalsy();
+  try {
+    containOperator('test-string1', 'test-string1');
+  } catch (error) {
+    expect(error.message).toMatch('You must use \'new RegExp(\'...\')\' for \'value\' in firewall configuration to use \'match\' or \'not match\' operator');
+  }
 });
 
 test('firewall.ts -> notMatchOperator()', () => {
