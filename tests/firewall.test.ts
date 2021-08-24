@@ -69,18 +69,30 @@ test('firewall.ts -> notEqualOperator()', () => {
 
 test('firewall.ts -> greaterOperator()', () => {
   expect(greaterOperator(1, 0)).toBeTruthy();
-  expect(greaterOperator('1', '0')).toThrow(Error);
+  try {
+    greaterOperator('a', '0');
+  } catch (error) {
+    expect(error.message).toMatch('You must use number for \'value\' in firewall configuration to use \'greater\' or \'less\' operator');
+  }
 });
 
 test('firewall.ts -> lessOperator()', () => {
   expect(lessOperator(0, 1)).toBeTruthy();
-  expect(lessOperator('0', '1')).toThrow(Error);
+  try {
+    lessOperator('a', '1');
+  } catch (error) {
+    expect(error.message).toMatch('You must use number for \'value\' in firewall configuration to use \'greater\' or \'less\' operator');
+  }
 });
 
 test('firewall.ts -> inOperator()', () => {
   expect(inOperator(0, [0, 1, 2])).toBeTruthy();
-  expect(lessOperator(0, [1, 2, 3])).toBeFalsy();
-  expect(lessOperator(0, "[1, 2, 3]")).toThrow(Error);
+  expect(inOperator(0, [1, 2, 3])).toBeFalsy();
+  try {
+    inOperator(0, "1, 2, 3");
+  } catch (error) {
+    expect(error.message).toMatch('You must use an Array for \'value\' in firewall configuration to use \'in\' or \'not in\' operator');
+  }
 });
 
 test('firewall.ts -> notInOperator()', () => {
@@ -91,6 +103,11 @@ test('firewall.ts -> notInOperator()', () => {
 test('firewall.ts -> containOperator()', () => {
   expect(containOperator('test-string', 'string')).toBeTruthy();
   expect(containOperator('test-string', 'not string')).toBeFalsy();
+  try {
+    containOperator('test-string1', 1);
+  } catch (error) {
+    expect(error.message).toMatch('You must use string for \'value\' in firewall configuration to use \'contain\' or \'not contain\' operator');
+  }
 });
 
 test('firewall.ts -> notContainOperator()', () => {

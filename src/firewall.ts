@@ -86,7 +86,7 @@ export const matchOperator: FirewallHandler = (
 export const notMatchOperator: FirewallHandler = (
   fieldParam,
   value,
-) => !notMatchOperator(fieldParam, value);
+) => !matchOperator(fieldParam, value);
 
 export const equalOperator: FirewallHandler = (
   fieldParam,
