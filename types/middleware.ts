@@ -1,11 +1,11 @@
-import { Configuration } from './proxy';
+import { Options } from './proxy';
 import { UpstreamOptions } from './upstream';
 
 export interface Context {
   hostname: string;
   request: Request;
   response: Response;
-  options: Configuration;
+  options: Options;
   upstream: UpstreamOptions | null;
 }
 

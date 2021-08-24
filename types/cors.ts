@@ -1,5 +1,3 @@
-type HTTPMethod = 'GET' | 'POST' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'TRACE' | 'CONNECT';
-
 export interface CORSOptions {
   /**
    * Configures the `Access-Control-Allow-Origin` CORS header. Possible values:
@@ -16,7 +14,7 @@ export interface CORSOptions {
    * If not specified, defaults to reflecting the method specified
    * in the request’s `Access-Control-Request-Method` header.
    */
-  methods?: HTTPMethod[] | '*';
+  methods?: string[] | '*';
 
   /**
    * Configures the `Access-Control-Expose-Headers` CORS header.

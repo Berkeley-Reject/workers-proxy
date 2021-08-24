@@ -1,4 +1,5 @@
 import { Middleware } from '../types/middleware';
+import { UpstreamOptions } from '../types/upstream';
 
 const ipToNum = (
   ip: string,
@@ -8,12 +9,28 @@ const ipToNum = (
   (accumulator, current) => accumulator + current,
 );
 
-export const useSelectUpstream: Middleware = (
+const validateUpstream = (
+  upstream: UpstreamOptions,
+): void => {
+  if (upstream.domain === undefined) {
+    throw new Error('Invalid \'upstream\' field in the option object');
+  }
+};
+
+export const useLoadBalancing: Middleware = async (
   context,
   next,
 ) => {
   const { options } = context;
   const upstreamOptions = options.upstream;
+  if (upstreamOptions === undefined) {
+    throw new Error('The required \'upstream\' field in the option object is missing');
+  } else if (Array.isArray(upstreamOptions)) {
+    upstreamOptions.forEach(validateUpstream);
+  } else {
+    validateUpstream(upstreamOptions);
+  }
+
   const upstream = Array.isArray(upstreamOptions) ? upstreamOptions : [upstreamOptions];
   const ipString = context.request.headers.get('cf-connecting-ip');
   if (ipString === null) {
@@ -22,5 +39,6 @@ export const useSelectUpstream: Middleware = (
     const userIP = ipToNum(ipString);
     context.upstream = upstream[userIP % upstream.length];
   }
-  return next();
+
+  await next();
 };

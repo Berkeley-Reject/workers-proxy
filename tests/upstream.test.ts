@@ -1,4 +1,4 @@
-import { cloneRequest, getURL, rewritePath } from '../src/upstream';
+import { cloneRequest, getURL } from '../src/upstream';
 
 test('upstream.ts -> cloneRequest()', () => {
   const request = new Request(
@@ -31,16 +31,4 @@ test('upstream.ts -> getURL()', () => {
     },
   );
   expect(url).toEqual('http://example.com:1080/test');
-});
-
-test('upstream.ts -> rewritePath()', () => {
-  const path = rewritePath(
-    '/api/test-path',
-    {
-      path: {
-        '/api/*': '/',
-      },
-    },
-  );
-  expect(path).toEqual('/test-path');
 });

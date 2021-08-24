@@ -1,14 +1,16 @@
 import { Middleware } from '../types/middleware';
 
-export const useCORS: Middleware = (
+export const useCORS: Middleware = async (
   context,
   next,
 ) => {
+  await next();
+
   const { request, response, options } = context;
 
   const corsOptions = options.cors;
   if (corsOptions === undefined) {
-    return next();
+    return;
   }
 
   const {
@@ -22,7 +24,7 @@ export const useCORS: Middleware = (
 
   const requestOrigin = request.headers.get('origin');
   if (requestOrigin === null || origin === false) {
-    return next();
+    return;
   }
 
   const corsHeaders = new Headers(
@@ -83,5 +85,4 @@ export const useCORS: Middleware = (
       headers: corsHeaders,
     },
   );
-  return next();
 };

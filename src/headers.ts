@@ -1,8 +1,4 @@
 import { Middleware } from '../types/middleware';
-import { RewriteOptions } from '../types/rewrite';
-import { SecurityOptions } from '../types/security';
-import { UpstreamOptions } from '../types/upstream';
-import { isSameOrigin } from './utils';
 
 export const setForwardedHeaders = (
   headers: Headers,
@@ -21,156 +17,39 @@ export const setForwardedHeaders = (
   }
 };
 
-export const useRequestHeaders: Middleware = (
+export const useHeaders: Middleware = async (
   context,
   next,
 ) => {
   const { request, options } = context;
-
-  const securityOptions = options.security;
-  const headers = new Headers(request.headers);
-  if (
-    securityOptions !== undefined
-    && securityOptions.forwarded === true
-  ) {
-    setForwardedHeaders(headers);
+  if (options.headers === undefined) {
+    await next();
+    return;
   }
 
-  const headerOptions = options.header;
-  if (
-    headerOptions !== undefined
-    && headerOptions.request !== undefined
-  ) {
-    for (const [key, value] of Object.entries(headerOptions.request)) {
-      headers.set(key, value);
+  const requestHeaders = new Headers(request.headers);
+  setForwardedHeaders(requestHeaders);
+
+  if (options.headers.request !== undefined) {
+    for (const [key, value] of Object.entries(options.headers.request)) {
+      requestHeaders.set(key, value);
     }
   }
 
   context.request = new Request(request.url, {
     body: request.body,
     method: request.method,
-    headers,
+    headers: requestHeaders,
   });
-  return next();
-};
 
-export const useSecurityHeaders = (
-  headers: Headers,
-  security: SecurityOptions | undefined,
-): Headers => {
-  if (security === undefined) {
-    return headers;
-  }
+  await next();
 
-  const {
-    xssFilter,
-    noSniff,
-    hidePoweredBy,
-    ieNoOpen,
-  } = security;
+  const { response } = context;
+  const responseHeaders = new Headers(response.headers);
 
-  if (xssFilter) {
-    headers.set('X-XSS-Protection', '0');
-  }
-
-  if (noSniff) {
-    headers.set('X-Content-Type-Options', 'nosniff');
-  }
-
-  if (hidePoweredBy) {
-    headers.delete('X-Powered-By');
-  }
-
-  if (ieNoOpen) {
-    headers.set('X-Download-Options', 'noopen');
-  }
-
-  return headers;
-};
-
-export const useRewriteHeaders = (
-  headers: Headers,
-  rewrite: RewriteOptions | undefined,
-  hostname: string,
-  upstream: UpstreamOptions | null,
-): Headers => {
-  if (
-    rewrite === undefined
-    || upstream === null
-  ) {
-    return headers;
-  }
-
-  const { cookie, pjax, location } = rewrite;
-
-  const setCookieHeader = headers.get('set-cookie');
-  if (
-    cookie
-    && setCookieHeader !== null
-  ) {
-    const setCookieAttributes = setCookieHeader.split(';').map((attribute) => {
-      if (attribute.toLowerCase().trim().startsWith('domain=')) {
-        return `domain=${hostname}`;
-      }
-      return attribute.trim();
-    });
-    headers.set('set-cookie', setCookieAttributes.join(';'));
-  }
-
-  const pjaxHeader = headers.get('x-pjax-url');
-  if (pjax && pjaxHeader !== null) {
-    const pjaxUrl = new URL(pjaxHeader);
-    if (isSameOrigin(pjaxUrl, upstream)) {
-      pjaxUrl.hostname = hostname;
-      headers.set('x-pjax-url', pjaxUrl.href);
-    }
-  }
-
-  const locationHeader = headers.get('location');
-  if (location && locationHeader !== null) {
-    const locationUrl = new URL(locationHeader);
-    if (isSameOrigin(locationUrl, upstream)) {
-      locationUrl.hostname = hostname;
-      headers.set('location', locationUrl.href);
-    }
-  }
-
-  return headers;
-};
-
-export const useResponseHeaders: Middleware = (
-  context,
-  next,
-) => {
-  const {
-    response,
-    options,
-    hostname,
-    upstream,
-  } = context;
-  const headers = new Headers(response.headers);
-
-  const securityOptions = options.security;
-  const securityHeaders = useSecurityHeaders(
-    headers,
-    securityOptions,
-  );
-
-  const rewriteOptions = options.rewrite;
-  const rewriteHeaders = useRewriteHeaders(
-    securityHeaders,
-    rewriteOptions,
-    hostname,
-    upstream,
-  );
-
-  const headerOptions = options.header;
-  if (
-    headerOptions !== undefined
-    && headerOptions.response !== undefined
-  ) {
-    for (const [key, value] of Object.entries(headerOptions.response)) {
-      headers.set(key, value);
+  if (options.headers.response !== undefined) {
+    for (const [key, value] of Object.entries(options.headers.response)) {
+      responseHeaders.set(key, value);
     }
   }
 
@@ -179,8 +58,7 @@ export const useResponseHeaders: Middleware = (
     {
       status: response.status,
       statusText: response.statusText,
-      headers: rewriteHeaders,
+      headers: responseHeaders,
     },
   );
-  return next();
 };
