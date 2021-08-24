@@ -69,17 +69,18 @@ test('firewall.ts -> notEqualOperator()', () => {
 
 test('firewall.ts -> greaterOperator()', () => {
   expect(greaterOperator(1, 0)).toBeTruthy();
-  expect(greaterOperator('1', '0')).toBeFalsy();
+  expect(greaterOperator('1', '0')).toThrow(Error);
 });
 
 test('firewall.ts -> lessOperator()', () => {
   expect(lessOperator(0, 1)).toBeTruthy();
-  expect(lessOperator('0', '1')).toBeFalsy();
+  expect(lessOperator('0', '1')).toThrow(Error);
 });
 
 test('firewall.ts -> inOperator()', () => {
   expect(inOperator(0, [0, 1, 2])).toBeTruthy();
   expect(lessOperator(0, [1, 2, 3])).toBeFalsy();
+  expect(lessOperator(0, "[1, 2, 3]")).toThrow(Error);
 });
 
 test('firewall.ts -> notInOperator()', () => {
