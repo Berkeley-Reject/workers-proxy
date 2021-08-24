@@ -81,7 +81,7 @@ export const matchOperator: FirewallHandler = (
     throw new Error('You must use \'new RegExp(\'...\')\' for \'value\' in firewall configuration to use \'match\' or \'not match\' operator');
   }
   return value.test(fieldParam.toString());
-}
+};
 
 export const notMatchOperator: FirewallHandler = (
   fieldParam,
