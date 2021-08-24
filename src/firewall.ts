@@ -76,12 +76,17 @@ export const getFieldParam = (
 export const matchOperator: FirewallHandler = (
   fieldParam,
   value,
-) => value instanceof RegExp && value.test(fieldParam.toString());
+) => {
+  if (!(value instanceof RegExp)) {
+    throw new Error('You must use \'new RegExp(\'...\')\' for \'value\' in firewall configuration to use \'match\' or \'not match\' operator');
+  }
+  return value.test(fieldParam.toString());
+}
 
 export const notMatchOperator: FirewallHandler = (
   fieldParam,
   value,
-) => value instanceof RegExp && !value.test(fieldParam.toString());
+) => !notMatchOperator(fieldParam, value);
 
 export const equalOperator: FirewallHandler = (
   fieldParam,
@@ -101,7 +106,7 @@ export const greaterOperator: FirewallHandler = (
     typeof fieldParam !== 'number'
     || typeof value !== 'number'
   ) {
-    return false;
+    throw new Error('You must use number for \'value\' in firewall configuration to use \'greater\' or \'less\' operator');
   }
   return fieldParam > value;
 };
@@ -114,7 +119,7 @@ export const lessOperator: FirewallHandler = (
     typeof fieldParam !== 'number'
     || typeof value !== 'number'
   ) {
-    return false;
+    throw new Error('You must use number for \'value\' in firewall configuration to use \'greater\' or \'less\' operator');
   }
   return fieldParam < value;
 };
@@ -127,7 +132,7 @@ export const containOperator: FirewallHandler = (
     typeof fieldParam !== 'string'
     || typeof value !== 'string'
   ) {
-    return false;
+    throw new Error('You must use string for \'value\' in firewall configuration to use \'contain\' or \'not contain\' operator');
   }
   return fieldParam.includes(value);
 };
@@ -142,7 +147,7 @@ export const inOperator: FirewallHandler = (
   value,
 ) => {
   if (!Array.isArray(value)) {
-    return false;
+    throw new Error('You must use an Array for \'value\' in firewall configuration to use \'in\' or \'not in\' operator');
   }
 
   return value.some(
