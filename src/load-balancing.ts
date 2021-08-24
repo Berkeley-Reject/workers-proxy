@@ -30,16 +30,20 @@ export const randomHandler: LoadBalancingHandler = (
 export const weightedRandomHandler: LoadBalancingHandler = (
   upstream,
 ) => {
-  const totalWeight = upstream.map(
+  const weights = upstream.map(
     (option) => (option.weight ? option.weight : 1),
-  ).reduce(
-    (accumulator, current) => accumulator + current,
   );
-  let randTotalWeight = Math.random() * totalWeight;
-  for (const currentOption of upstream) {
-    randTotalWeight -= currentOption.weight ? currentOption.weight : 1;
-    if (randTotalWeight <= 0) {
-      return currentOption;
+  const totalWeight = weights.reduce(
+    (acc, num, index) => {
+      const sum = acc + num;
+      weights[index] = sum;
+      return sum;
+    },
+  );
+  const random = Math.random() * totalWeight;
+  for (const index of weights.keys()) {
+    if (weights[index] > random) {
+      return upstream[index];
     }
   }
   return upstream[Math.floor(Math.random() * upstream.length)];
