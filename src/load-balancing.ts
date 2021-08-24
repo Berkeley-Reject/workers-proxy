@@ -40,6 +40,9 @@ export const weightedRandomHandler: LoadBalancingHandler = (
       return sum;
     },
   );
+  if (totalWeight === 0) {
+    throw new Error('Total weights should be greater than 0.');
+  }
   const random = Math.random() * totalWeight;
   for (const index of weights.keys()) {
     if (weights[index] > random) {
