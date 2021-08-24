@@ -1,4 +1,4 @@
-export interface HeaderOptions {
+export interface HeadersOptions {
   /**
    * Sets request header going upstream to the backend.
    */

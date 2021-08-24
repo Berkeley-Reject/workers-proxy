@@ -1,76 +1,72 @@
-import { useValidate } from './validate';
 import { useFirewall } from './firewall';
-import { useRequestHeaders, useResponseHeaders } from './headers';
-import { useSelectUpstream } from './load-balancing';
-import { useWebSocket } from './websocket';
+import { useHeaders } from './headers';
+import { useLoadBalancing } from './load-balancing';
 import { useUpstream } from './upstream';
-import { useCustomError } from './custom-error';
 import { useCORS } from './cors';
+import { useRewrite } from './rewrite';
 
 import { createResponse, getHostname } from './utils';
 import { usePipeline } from './middleware';
 
-import { Proxy, Configuration, Pattern } from '../types/proxy';
+import { Proxy, Options, Route } from '../types/proxy';
 import { Context } from '../types/middleware';
 
 const filter = (
-  path: string,
-  patterns: Pattern[],
-): Configuration | null => {
-  for (const { pattern, options } of patterns) {
-    const test = new RegExp(`^${pattern.replace(/\*/g, '.*')}`).test(path);
-    if (test === true) {
-      return options;
+  request: Request,
+  routes: Route[],
+): Options | null => {
+  const url = new URL(request.url);
+  for (const { pattern, options } of routes) {
+    if (
+      options.methods === undefined
+      || options.methods.includes(request.method)
+    ) {
+      const regex = new RegExp(`^${pattern.replace(/\*/g, '.*')}`);
+      if (regex.test(url.pathname)) {
+        return options;
+      }
     }
   }
   return null;
 };
 
 export default function useProxy(
-  globalOptions?: Configuration,
+  globalOptions?: Partial<Options>,
 ): Proxy {
   const pipeline = usePipeline(
-    useValidate,
     useFirewall,
-    useRequestHeaders,
-    useSelectUpstream,
-    useUpstream,
-    useWebSocket,
-    useCustomError,
+    useLoadBalancing,
+    useHeaders,
     useCORS,
-    useResponseHeaders,
+    useRewrite,
+    useUpstream,
   );
 
-  const routes: Pattern[] = [];
-  if (globalOptions !== undefined) {
-    routes.push({
-      pattern: '*',
-      options: globalOptions,
-    });
-  }
-
+  const routes: Route[] = [];
   const use = (
     pattern: string,
-    options: Configuration,
+    options: Options,
   ) => {
     routes.push({
       pattern,
-      options,
+      options: {
+        ...globalOptions,
+        ...options,
+      },
     });
   };
 
   const apply = async (
     request: Request,
   ): Promise<Response> => {
-    const url = new URL(request.url);
-    const options = filter(url.pathname, routes);
+    const options = filter(request, routes);
     if (options === null) {
-      return createResponse('Failed to find a route that matches the path of the current request', 500);
+      return createResponse('Failed to find a route that matches the path and method of the current request', 500);
     }
 
     const context: Context = {
-      options,
       request,
+      options,
       hostname: getHostname(request),
       response: new Response('Unhandled response'),
       upstream: null,

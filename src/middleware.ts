@@ -24,7 +24,7 @@ export const usePipeline = (
       }
 
       const middleware = stack[index];
-      const next = () => runner(index, index + 1);
+      const next = async () => runner(index, index + 1);
       await middleware(context, next);
     };
 

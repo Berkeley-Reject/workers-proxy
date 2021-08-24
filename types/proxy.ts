@@ -1,32 +1,29 @@
 import { UpstreamOptions } from './upstream';
 import { FirewallOptions } from './firewall';
-import { ErrorOptions } from './custom-error';
 import { CORSOptions } from './cors';
-import { OptimizationOptions } from './optimization';
-import { HeaderOptions } from './headers';
-import { SecurityOptions } from './security';
+import { HeadersOptions } from './headers';
 import { RewriteOptions } from './rewrite';
+import { LoadBalancingOptions } from './load-balancing';
 
-export interface Configuration {
+export interface Options {
   upstream: UpstreamOptions | UpstreamOptions[];
   firewall?: FirewallOptions[];
-  error?: ErrorOptions[];
   cors?: CORSOptions;
-  optimization?: OptimizationOptions;
-  header?: HeaderOptions;
-  security?: SecurityOptions;
   rewrite?: RewriteOptions;
+  headers?: HeadersOptions;
+  methods?: string[],
+  loadBalancing?: LoadBalancingOptions,
 }
 
-export interface Pattern {
+export interface Route {
   pattern: string;
-  options: Configuration;
+  options: Options;
 }
 
 export interface Proxy {
   use: (
     pattern: string,
-    options: Configuration,
+    options: Options,
   ) => void;
   apply: (
     request: Request,
