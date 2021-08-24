@@ -32,7 +32,7 @@ const baseContext: Context = {
   },
 };
 
-describe('cors.ts -> await useCORS()', () => {
+describe('cors.ts -> useCORS()', () => {
   test('undefined options', async () => {
     const context: Context = {
       ...baseContext,

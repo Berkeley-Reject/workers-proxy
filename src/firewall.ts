@@ -1,4 +1,3 @@
-import { createResponse } from './utils';
 import {
   FirewallFields,
   FirewallOperators,
@@ -190,11 +189,7 @@ export const useFirewall: Middleware = async (
       fieldParam !== undefined
       && operatorsMap[operator](fieldParam, value)
     ) {
-      context.response = createResponse(
-        'You don\'t have permission to access this service.',
-        403,
-      );
-      return;
+      throw new Error('You don\'t have permission to access this service.');
     }
   }
 
