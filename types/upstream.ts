@@ -3,4 +3,5 @@ export interface UpstreamOptions {
   protocol?: 'http' | 'https';
   port?: number;
   timeout?: number;
+  weight?: number;
 }

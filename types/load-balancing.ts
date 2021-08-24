@@ -1,6 +1,6 @@
 import { UpstreamOptions } from './upstream';
 
-export type LoadBalancingPolicy = 'random' | 'ip-hash';
+export type LoadBalancingPolicy = 'random' | 'ip-hash' | 'weighted-random';
 
 export type LoadBalancingHandler = (
   upstream: UpstreamOptions[],

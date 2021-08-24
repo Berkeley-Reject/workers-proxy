@@ -27,12 +27,31 @@ export const randomHandler: LoadBalancingHandler = (
   upstream,
 ) => upstream[Math.floor(Math.random() * upstream.length)];
 
+export const weightedRandomHandler: LoadBalancingHandler = (
+  upstream,
+) => {
+  const totalWeight = upstream.map(
+    (option) => (option.weight ? option.weight : 1),
+  ).reduce(
+    (accumulator, current) => accumulator + current,
+  );
+  let randTotalWeight = Math.random() * totalWeight;
+  for (const currentOption of upstream) {
+    randTotalWeight -= currentOption.weight ? currentOption.weight : 1;
+    if (randTotalWeight <= 0) {
+      return currentOption;
+    }
+  }
+  return upstream[Math.floor(Math.random() * upstream.length)];
+};
+
 const handlersMap: Record<
   LoadBalancingPolicy,
   LoadBalancingHandler
 > = {
   random: randomHandler,
   'ip-hash': ipHashHandler,
+  'weighted-random': weightedRandomHandler,
 };
 
 export const useLoadBalancing: Middleware = async (
