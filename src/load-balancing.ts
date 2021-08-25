@@ -25,10 +25,6 @@ export const ipHashHandler: LoadBalancingHandler = (
 
 export const randomHandler: LoadBalancingHandler = (
   upstream,
-) => upstream[Math.floor(Math.random() * upstream.length)];
-
-export const weightedRandomHandler: LoadBalancingHandler = (
-  upstream,
 ) => {
   const weights = upstream.map(
     (option) => (option.weight === undefined ? 1 : option.weight),
@@ -58,7 +54,6 @@ const handlersMap: Record<
 > = {
   random: randomHandler,
   'ip-hash': ipHashHandler,
-  'weighted-random': weightedRandomHandler,
 };
 
 export const useLoadBalancing: Middleware = async (

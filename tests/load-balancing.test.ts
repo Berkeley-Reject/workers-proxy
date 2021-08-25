@@ -2,27 +2,11 @@ import {
   useLoadBalancing,
   ipHashHandler,
   randomHandler,
-  weightedRandomHandler,
 } from '../src/load-balancing';
 import { UpstreamOptions } from '../types/upstream';
 import { Context } from '../types/middleware';
 
 const upstreamArray: UpstreamOptions[] = [
-  {
-    domain: 'javascript.info',
-    protocol: 'https',
-  },
-  {
-    domain: 'httpbin.org',
-    protocol: 'https',
-  },
-  {
-    domain: 'google.com',
-    protocol: 'https',
-  },
-];
-
-const upstreamArray2: UpstreamOptions[] = [
   {
     domain: 'javascript.info',
     protocol: 'https',
@@ -89,17 +73,9 @@ test('load-balancing.ts -> randomHandler()', () => {
   expect(upstream.domain).toBeTruthy();
 });
 
-test('load-balancing.ts -> weightedRandomHandler()', () => {
-  const upstream = weightedRandomHandler(
+test('load-balancing.ts ->  randomHandler() | weighted', () => {
+  const upstream = randomHandler(
     upstreamArray,
-    request,
-  );
-  expect(upstream.domain).toBeTruthy();
-});
-
-test('load-balancing.ts -> weightedRandomHandler()', () => {
-  const upstream = weightedRandomHandler(
-    upstreamArray2,
     request,
   );
   expect(upstream.domain).toEqual('httpbin.org');
