@@ -3,6 +3,7 @@ import { FirewallOptions } from './firewall';
 import { CORSOptions } from './cors';
 import { HeadersOptions } from './headers';
 import { RewriteOptions } from './rewrite';
+import { LoadBalancingOptions } from './load-balancing';
 
 export interface Options {
   upstream: UpstreamOptions | UpstreamOptions[];
@@ -11,6 +12,7 @@ export interface Options {
   rewrite?: RewriteOptions;
   headers?: HeadersOptions;
   methods?: string[],
+  loadBalancing?: LoadBalancingOptions,
 }
 
 export interface Route {
