@@ -11,21 +11,6 @@ const upstreamArray: UpstreamOptions[] = [
   {
     domain: 'javascript.info',
     protocol: 'https',
-  },
-  {
-    domain: 'httpbin.org',
-    protocol: 'https',
-  },
-  {
-    domain: 'google.com',
-    protocol: 'https',
-  },
-];
-
-const upstreamArray2: UpstreamOptions[] = [
-  {
-    domain: 'javascript.info',
-    protocol: 'https',
     weight: 0,
   },
   {
@@ -99,7 +84,7 @@ test('load-balancing.ts -> weightedRandomHandler()', () => {
 
 test('load-balancing.ts -> weightedRandomHandler()', () => {
   const upstream = weightedRandomHandler(
-    upstreamArray2,
+    upstreamArray,
     request,
   );
   expect(upstream.domain).toEqual('httpbin.org');
